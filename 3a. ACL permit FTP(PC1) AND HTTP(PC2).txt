@@ -1,0 +1,137 @@
+Part 1: configure router
+Step 1: configure password for VTY lines
+
+vty 0 4
+password vtypa55
+login
+
+Step 2: configure secret password on router
+
+enable secret enpa55
+
+
+-------------------------------------------------------------------------------------
+
+
+Part 2: configure, apply and verify an extended number ACL.
+Step 1: configure an ACL to permit FTP and ICMP.
+
+access-list 100 permit tcp 172.22.34.64 0.0.0.31 host 172.22.34.62 eq ftp
+access-list 100 permit icmp 172.22.34.64 0.0.0.31 host 172.22.34.62
+
+Step 2: apply the ACL on the current interface to filter traffic.
+
+int gig 0/0
+ip access-group 100 in
+
+Step 3: verify the ACL implementation.
+
+a.	Ping from PC1 to server
+PC1> ping 172.22.34.62
+(successful)
+
+b.	FTP from PC1 to server 
+the username and password are both cisco
+PC1> ftp 172.22.34.62
+
+c.	Exit FTP service of the server
+ftp> quit
+
+d.	Ping from PC1 to PC2
+PC1 > ping 172.22.34.98
+(unsuccessful) – destination host unreachable
+
+
+-------------------------------------------------------------------------------------
+
+Part 3: configure, apply and verify an extended named ACL
+Step 1: configure an ACL to permit HTTP access and ICMP
+
+ip access-list extended HTTP_ONLY
+permit tcp 172.22.34.96 0.0.0.15 host 172.22.34.62 eq www
+permit icmp 172.22.34.96 0.0.0.15 host 172.22.34.62
+
+Step 2: apply ACL on the current interface to filter traffic
+
+int gig 0/1
+ip access-group HTTP_ONLY in
+
+Step 3: verify the ACL implementation
+
+a.	Ping from PC2 to server
+PC2> ping 172.22.34.62
+
+b.	FTP from PC2 to server
+PC2> ftp 172.22.34.62
+
+c.	Open the web browser on PC2
+In URL type -> http://172.22.34.62
+
+d.	Ping from PC2 to PC1
+PC2> ping 172.22.34.66
+(unsuccessful)
+
+
+===================================================================================================
+===================================================================================================
+
+Part 1: configure router
+
+vty 0 4
+password vtypa55
+login
+
+enable secret enpa55
+
+-------------------------------------------------------------------------------------
+
+
+Part 2: configure, apply and verify an extended number ACL.
+Step 1: configure an ACL to permit FTP and ICMP.
+
+access-list 100 permit tcp 172.22.34.64 0.0.0.31 host 172.22.34.62 eq ftp
+access-list 100 permit icmp 172.22.34.64 0.0.0.31 host 172.22.34.62
+
+int gig 0/0
+ip access-group 100 in
+
+a.	Ping from PC1 to server
+PC1> ping 172.22.34.62
+(successful)
+
+b.	FTP from PC1 to server 
+the username and password are both cisco
+PC1> ftp 172.22.34.62
+
+c.	Exit FTP service of the server
+ftp> quit
+
+d.	Ping from PC1 to PC2
+PC1 > ping 172.22.34.98
+(unsuccessful) – destination host unreachable
+
+
+-------------------------------------------------------------------------------------
+
+Part 3: configure, apply and verify an extended named ACL
+Step 1: configure an ACL to permit HTTP access and ICMP
+
+ip access-list extended HTTP_ONLY
+permit tcp 172.22.34.96 0.0.0.15 host 172.22.34.62 eq www
+permit icmp 172.22.34.96 0.0.0.15 host 172.22.34.62
+
+int gig 0/1
+ip access-group HTTP_ONLY in
+
+a.	Ping from PC2 to server
+PC2> ping 172.22.34.62
+
+b.	FTP from PC2 to server
+PC2> ftp 172.22.34.62
+
+c.	Open the web browser on PC2
+In URL type -> http://172.22.34.62
+
+d.	Ping from PC2 to PC1
+PC2> ping 172.22.34.66
+(unsuccessful)

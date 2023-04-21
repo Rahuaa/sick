@@ -1,0 +1,247 @@
+Part 1: Configure Router
+Step 1: configure secret password on router
+(Execute commands on all routers)
+
+enable secret enpa55
+
+Step 2: configure password for VTY lines
+(Execute commands on all routers)
+
+vty 0 4
+password vtypa55
+login
+
+Step 3: configure SSH login on router 
+(Execute command on all routers)
+
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local 
+crypto key generate rsa
+
+STEP 4: CONFIGURE OSPF ON ROUTER
+R1:
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R2:
+router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R3:
+router ospf 1
+network 192.168.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+Step 5: Verify Network Connectivity
+PCA> ping 192.168.3.2
+(Successful)
+PCC> ping 192.168.1.2
+(Successful)
+
+
+----------------------------------------------------------------------
+
+
+Part 2: Verify the Security Technology Package
+(Perform on R1)
+Step 1: verify the security technology package
+R1# show version
+ 
+
+Step 2: enable the security technology package
+R1:
+license boot module c1900 technology-package securityk9
+
+Step 3: save the running config and reload the router
+R1# copy run start
+R1# reload
+
+Step 4: verify the security technology package
+R1# show version
+ 
+Step 5: Create an IOS IPS configuration directory in flash:
+R1# mkdir ipsdir
+Create directory filename [ipsdir] <press enter>
+
+Step 6: Configure the IPS signature storage location
+ip ips config location flash:ipsdir
+
+Step 7: Create an IPS rule 
+ip ips name iosips
+
+Step 8: Enable logging
+ip ips notify log
+R1# clock set 17:40:28 20 FEB 2023
+service timestamps log datetime msec
+logging host 192.168.1.50
+
+Step 9: Configure IOS IPS to use the signature category
+ip ips signature-category
+category all
+retired true
+exit
+category ios_ips basic
+retired false
+exit
+exit
+
+Step 10: Apply the IPS rule to an interface 
+int gig0/0
+ip ips iosips out
+
+Step 11: use show command to verify IPS 
+R1#  show ip ips all
+
+Step 12: View the SYSLOG messages
+Click the syslog server -> Services Tab -> SYSLOG
+
+-------------------------------------------------------------------------
+
+Part 3: Modify the signature
+
+Step 1: change the event action of the signature
+R1:
+ip ips signature-definition
+signature 2004 0
+status
+retired false
+enabled true
+exit
+engine
+event-action produce-alert
+event-action deny-packet-inline
+exit
+exit
+exit
+
+Step 2: Use show commands to verify IPS
+R1# show ip ips all
+
+Step 3: Verify that the IPS is working properly
+
+PCC> ping 192.168.1.2
+(Unsuccessful) – Request timed out
+
+PCA> ping 192.168.3.2
+(Successful)
+
+Step 4: View the SYSLOG messages
+Click the syslog server -> Services Tab -> SYSLOG
+
+
+=============================================================================================
+=============================================================================================
+
+Part 1: Configure Router
+(Execute commands on all routers)
+
+enable secret enpa55
+
+vty 0 4
+password vtypa55
+login
+
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local 
+crypto key generate rsa
+
+R1:
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R2:
+router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R3:
+router ospf 1
+network 192.168.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+PCA> ping 192.168.3.2
+(Successful)
+PCC> ping 192.168.1.2
+(Successful)
+
+
+----------------------------------------------------------------------
+
+
+Part 2: Verify the Security Technology Package
+(Perform on R1)
+
+R1# show version
+
+license boot module c1900 technology-package securityk9
+(enter yes)
+
+R1# copy run start
+R1# reload
+
+R1# show version
+
+R1# mkdir ipsdir
+question : Create directory filename [ipsdir] <press enter>
+
+ip ips config location flash:ipsdir
+
+ip ips name iosips
+
+ip ips notify log
+
+R1# clock set 17:40:28 24 APRIL 2023
+
+service timestamps log datetime msec
+logging host 192.168.1.50
+
+ip ips signature-category
+category all
+retired true
+exit
+category ios_ips basic
+retired false
+exit
+exit
+
+int gig0/0
+ip ips iosips out
+ 
+R1#  show ip ips all
+
+Click the syslog server -> Services Tab -> SYSLOG
+
+-------------------------------------------------------------------------
+
+Part 3: Modify the signature
+
+R1:
+ip ips signature-definition
+signature 2004 0
+status
+retired false
+enabled true
+exit
+engine
+event-action produce-alert
+event-action deny-packet-inline
+exit
+exit
+exit
+
+R1# show ip ips all
+
+PCC> ping 192.168.1.2
+(Unsuccessful) – Request timed out
+
+PCA> ping 192.168.3.2
+(Successful)
+
+Click the syslog server -> Services Tab -> SYSLOG

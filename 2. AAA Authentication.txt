@@ -1,0 +1,138 @@
+Part 1: CONFIGURE ROUTER
+Step 1: configure password for VTY lines 
+line vty 0 4
+password vtypa55
+login
+
+Step 2: configure secret password on router
+enable secret enpa55
+
+Step 3: configure OSPF on router
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+
+Step 4: configure OSPF MD5 authentication for all router in Area 0
+router ospf 1
+area 0 authentication message-digest
+
+Step 5: configure MD5 key for all routers in Area 0
+int gig 0/0
+ip ospf message-digest-key 1 md5 md5pa55
+
+Step 6: verify MD5 authentication configuration
+show ip ospf interface (#)
+ 
+Step 7: verify end to end connectivity
+PC0> ping 192.168.1.1
+PC1> ping 192.168.1.1
+
+
+-----------------------------------------------------------------------------
+
+
+PART 2: CONFIGURE LOCAL AAA AUTHENTICATION FOR CONSOLE ACCESS ON R1
+Step 1: configure local username on R1
+username admin secret adminpa55
+
+Step 2: configure local AAA authentication for console access on R1
+aaa new-model
+aaa authentication login default local
+
+Step 3: configure the line console to use the defined AAA authentication
+line console 0
+login authentication default
+
+Step 4: verify the AAA authentication method
+end
+exit
+
+
+-----------------------------------------------------------------------------------
+
+PART 3: CONFIGURE LOCAL AAA AUTHENTICATION FOR VTY LINES ON R1
+Step 1: configure domain name and Crypto key for the use with SSH
+ip domain-name ccnasecurity.com
+crypto key generate rsa
+
+Step 2: configure the name list AAA authentication method for the VTY reliance on R1
+aaa authentication login ssh-login local
+
+Step 3: configure the VTY lines to use the defined AAA authentication method
+line vty 0 4
+login authentication ssh-login
+transport input ssh
+end
+
+Step 4: verify the AAA authentication method
+PC0> ssh -l admin 192.168.1.1
+Password : adminpa55
+R1>
+
+PC1> ssh -l admin 192.168.1.1
+Password : adminpa55
+R1>
+
+
+===================================================================================================
+===================================================================================================
+
+
+Part 1: CONFIGURE ROUTER
+
+line vty 0 4
+password vtypa55
+login
+
+enable secret enpa55
+
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+
+router ospf 1
+area 0 authentication message-digest
+
+int gig 0/0
+ip ospf message-digest-key 1 md5 md5pa55
+
+show ip ospf interface (#)
+
+PC0> ping 192.168.1.1
+PC1> ping 192.168.1.1
+
+
+-----------------------------------------------------------------------------
+
+PART 2: CONFIGURE LOCAL AAA AUTHENTICATION FOR CONSOLE ACCESS ON R1
+
+username admin secret adminpa55
+
+aaa new-model
+aaa authentication login default local
+
+line console 0
+login authentication default
+
+end
+exit
+
+
+-----------------------------------------------------------------------------------
+
+PART 3: CONFIGURE LOCAL AAA AUTHENTICATION FOR VTY LINES ON R1
+ip domain-name ccnasecurity.com
+crypto key generate rsa
+
+aaa authentication login ssh-login local
+
+line vty 0 4
+login authentication ssh-login
+transport input ssh
+end
+
+PC0> ssh -l admin 192.168.1.1
+Password : adminpa55
+R1>
+
+PC1> ssh -l admin 192.168.1.1
+Password : adminpa55
+R1>

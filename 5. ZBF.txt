@@ -1,0 +1,290 @@
+Part 1: configure router
+Step 1: configure console password on router
+(Execute command on all routers)
+line console 0
+password conpa55
+login
+
+Step 2: configure password for VTY lines
+(Execute command on all routers)
+line vty 0 4
+password vtypa55
+login
+
+Step 3: configure secret on router
+(Execute command on all routers)
+enable secret enpa55
+
+Step 4: configure SSH login on router 
+(Execute command on all routers)
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local 
+crypto key generate rsa
+
+Step 5: configure static routing on router
+R1:
+ip route 10.2.2.0 255.255.255.252 10.1.1.2
+ip route 192.168.3.0 255.255.255.0 10.1.1.2
+
+R2:
+ip route 192.168.1.0 255.255.255.0 10.1.1.1
+ip route 192.168.3.0 255.255.255.0 10.2.2.1
+
+R3:
+ip route 192.168.1.0 255.255.255.0 10.2.2.2
+ip route 10.1.1.0 255.255.255.252 10.2.2.2
+
+Step 6: verify basic network connectivity
+Step A: check connectivity PCA to PCC
+PCA> ping 192.168.3.3
+(Successful)
+
+Step B: access R2 using SSH
+PCC> ssh -l admin 10.2.2.2
+Password : adminpa55
+R2> exit
+
+Step C: from PCC open a web browser to PCA server
+Desktop -> Web Browser -> URL : http://192.168.1.3
+
+--------------------------------------------------------------------------
+
+Part 2: create a firewall zone on R3
+Step 1: verify the security technology package
+R3# show version
+ 
+
+Step 2: enable the security technology package
+R3:
+license boot module c1900 technology-package securityk9
+
+Step 3: save the running config and reload the router
+R3# copy run start
+R3# reload
+
+Step 4: verify the security technology package
+R3# show version
+ 
+
+Step 5: create an internal zone
+zone security IN-ZONE
+exit
+
+Step 6: create an external zone
+zone security OUT-ZONE
+exit
+
+----------------------------------------------------------------------------
+
+Part 3: Identify traffic using a class map
+Step 1: create an ACL that defines internal traffic
+R3:
+access-list 101 permit ip 192.168.3.0 0.0.0.255 any
+
+Step 2: create a class map refers to the internal traffic ACL
+R3:
+class-map type inspect match-all IN-NET-CLASS-MAP
+match access-group 101
+exit
+
+-------------------------------------------------------------------------------------
+
+Part 4: specify firewall policies
+Step 1: create a policy map to determine what to do with the matched traffic
+R3:
+policy-map type inspect IN-2-OUT-PMAP
+
+Step 2: specify a class type of inspect and reference class – map IN – NET - CLASS- MAP
+class type inspect IN-NET-CLASS-MAP
+
+Step 3: specify the action of inspect for this policy map
+inspect
+exit
+exit
+
+----------------------------------------------------------------------------------
+
+
+Part 5: apply firewall policies (R3)
+
+Step 1: create a pair of zones
+zone-pair security IN-2-OUT-ZPAIR source IN-ZONE destination OUT-ZONE
+
+Step 2: specify the policy map for handling the traffic between the two zones
+service-policy type inspect IN-2-OUT-PMAP
+exit
+
+Step 3: assign interfaces to the appropriate security zones
+int gig 0/0
+zone-member security IN-ZONE
+exit
+int se 0/1/0
+zone-member security OUT-ZONE
+exit
+
+Step 4: copy the running configuration to the startup configuration
+R3# copy run start
+R3# reload
+
+-------------------------------------------------------------------------------------
+
+Part 6: Test Firewall functionality from IN – ZONE to OUT – ZONE
+Step 1: from internal PCC, ping to external PCA server
+PCC> ping 192.168.1.3
+(Successful)
+
+Step 2: access R2 using SSH
+PCC> ssh -l admin 10.2.2.2
+Password : adminpa55
+R2> exit
+
+Step 3: view established sessions
+R3# show policy-map type inspect zone-pair sessions
+
+ 
+
+Step 4: from PCC, exit the SSH session on R2 and close the command prompt window
+R2> exit
+
+Step 5: from internal PCC, open the web browser to the PCA server web page
+Desktop -> Web Browser -> URL : http://192.168.1.3
+(Successful)
+
+Step 6: view established sessions
+R3# show policy-map type inspect zone-pair sessions
+
+--------------------------------------------------------------------------------------
+
+Part 7: Test Firewall functionality from OUT – ZONE to IN – ZONE
+Step 1: from internal PCA, ping the external PCC server
+PCA> ping 192.168.3.3
+(Unsuccessful)
+
+Step 2: from R2, ping PCC
+R2# ping 192.168.3.3
+ 
+(Unsuccessful)
+
+
+
+
+==================================================================================================================
+==================================================================================================================
+
+
+(Execute command on all routers)
+line console 0
+password conpa55
+login
+
+line vty 0 4
+password vtypa55
+login
+
+enable secret enpa55
+
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local 
+crypto key generate rsa
+
+
+R1:
+ip route 10.2.2.0 255.255.255.252 10.1.1.2
+ip route 192.168.3.0 255.255.255.0 10.1.1.2
+
+R2:
+ip route 192.168.1.0 255.255.255.0 10.1.1.1
+ip route 192.168.3.0 255.255.255.0 10.2.2.1
+
+R3:
+ip route 192.168.1.0 255.255.255.0 10.2.2.2
+ip route 10.1.1.0 255.255.255.252 10.2.2.2
+
+PCA> ping 192.168.3.3
+
+PCC> ssh -l admin 10.2.2.2
+
+http://192.168.1.3
+
+--------------------------------------------------------------------------
+all on R3
+
+R3# show version
+
+license boot module c1900 technology-package securityk9
+
+R3# copy run start
+R3# reload
+
+R3# show version
+
+zone security IN-ZONE
+exit
+
+zone security OUT-ZONE
+exit
+
+----------------------------------------------------------------------------
+
+R3:
+access-list 101 permit ip 192.168.3.0 0.0.0.255 any
+
+class-map type inspect match-all IN-NET-CLASS-MAP
+match access-group 101
+exit
+
+-------------------------------------------------------------------------------------
+
+R3:
+policy-map type inspect IN-2-OUT-PMAP
+
+class type inspect IN-NET-CLASS-MAP
+
+inspect
+exit
+exit
+
+----------------------------------------------------------------------------------
+R3:
+
+zone-pair security IN-2-OUT-ZPAIR source IN-ZONE destination OUT-ZONE
+
+service-policy type inspect IN-2-OUT-PMAP
+exit
+
+int gig 0/0
+zone-member security IN-ZONE
+exit
+int se 0/1/0
+zone-member security OUT-ZONE
+exit
+
+R3# copy run start
+R3# reload
+
+-------------------------------------------------------------------------------------
+
+PCC> ping 192.168.1.3
+
+PCC> ssh -l admin 10.2.2.2
+
+R3# show policy-map type inspect zone-pair sessions
+
+from PCC, exit the SSH session on R2 and close the command prompt window
+R2> exit
+
+http://192.168.1.3
+
+R3# show policy-map type inspect zone-pair sessions
+
+--------------------------------------------------------------------------------------
+
+PCA> ping 192.168.3.3
+
+R2# ping 192.168.3.3
+
+

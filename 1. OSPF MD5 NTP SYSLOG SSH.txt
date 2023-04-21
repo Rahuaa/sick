@@ -1,0 +1,310 @@
+PART 1: CONFIGURE ROUTERS
+STEP 1: CONFIGURE PASSWORD FOR ALL VTY LINES
+(Execute on all routers)
+
+line vty 0 4
+password vtypa55
+login
+
+STEP 2: CONFIGURE SECRET PASSWORDON ROUTER
+(Execute on all routers)
+
+enable secret enpa55
+
+STEP 3: CONFIGURE OSPF ON ROUTER
+R1:
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R2:
+router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R3:
+router ospf 1
+network 192.168.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+STEP 4: TEST CONNECTIVITY
+PC-A
+ping 192.168.3.5
+
+PC-B
+ping 192.168.3.5
+
+
+---------------------------------------------------------------
+
+
+PART 2: CONFIGURE OSPF MD5 AUTHENTICATION
+STEP 1: CONFIGURE OSPF MD5 AUTHENTICATION FOR ALL ROUTERS IN AREA 0
+(Execute on all routers)
+
+router ospf 1
+area 0 authentication message-digest
+
+STEP 2: CONFIGURE THE MD5 KEY FOR ALL THE ROUTERS IN AREA 0
+R1:
+int se 0/1/0
+ip ospf message-digest-key 1 md5 md5pa55
+
+R2:
+int se 0/1/0
+ip ospf message-digest-key 1 md5 md5pa55
+int se 0/1/1
+ip ospf message-digest-key 1 md5 md5pa55
+
+R3:
+int se 0/1/0
+ip ospf message-digest-key 1 md5 md5pa55
+
+STEP 3: VERIFY CONFIGURATION
+(Execute on all routers)
+
+show ip ospf interface  (#)
+
+
+---------------------------------------------------------------
+
+
+PART 3: CONFIGURE NTP
+STEP 1: ENABLE NTP AUTHENTICATION ON PC-A
+Open PC-A --- Services --- NTP ---- make Service (ON) and Authentication (Enable) ---- set Key value to 1 and password as ntppa55
+
+STEP 2: CONFIGURE ROUTERS AS NTP CLIENTS
+(Execute on all routers)
+
+ntp server 192.168.1.5
+
+STEP 3: CONFIGURE ROUTERS TO UPDATE HARDWARE CLOCK
+(Execute on all routers)
+
+ntp update-calendar
+
+STEP 4: VERIFY THE HARDWARE CLOCK
+(Execute on all routers)
+  
+show clock  (#)
+
+STEP 5: CONFIGURE NTP AUTHENTICATION ON ROUTERS
+(Execute on all routers)
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 ntppa55
+
+STEP 6: CONFIGURE ROUTERS TO TIMESTAMP LOG MESSAGES
+(Execute on all routers)
+
+service timestamps log datetime msec
+
+
+---------------------------------------------------------------
+
+
+PART 4: CONFIGURE ROUTERS TO LOG MESSAGES TO THE SYSLOG SERVICE
+STEP 1: CONFIGURE THE ROUTERS TO IDENTIFY THE REMOTE HOST (SYSLOG SERVER) THAT WILL RECIEVE LOGGING MESSAGES
+(Execute on all routers)
+
+logging host 192.168.1.6
+
+STEP 2: VERIFY THE LOGGING CONFIGURATION
+(Execute on all routers)
+
+show logging
+
+O/p: 2 messages lines logged
+
+STEP 3: EXAMINE THE LOGS OF SYSLOG SERVER
+
+Open the SYSLOG SERVER ie PC-B – Service --- SYSLOG 
+
+
+---------------------------------------------------------------
+
+
+PART 5: CONFIGURE R3 TO SUPPORT SSH CONNECTION
+STEP 1: CONFIGURE THE DOMAIN NAME
+R3:
+ip domain-name ccnasecurity.com
+
+STEP 2: CONFIGURE USERS FOR LOGIN TO THE SSH SERVER ON R3
+R3:
+username sshadmin privilege 15 secret sshpa55
+
+STEP 3: CONFIGURE THE INCOMING VTY LINES ON R3
+R3:
+line vty 0 4 
+login local
+transport input ssh
+
+STEP 4: ERASE EXISTING KEY POINTS ON R3
+R3:
+crypto key zeroize rsa
+
+O/p: no signature RSA keys found 
+
+STEP 5: GENERATE RSA ENCRYPTION KEY PAIR FOR R3
+R3:
+crypto key generate rsa
+
+STEP 6: VERIFY THE SSH CONFIGURATION
+R3:
+show ip ssh (#)
+
+STEP 7: CONFIGURE SSH TIMEOUT AND AUTHENTICATTION PARAMETERS
+R3:
+ip ssh time-out 90
+ip ssh authentication-retries 2
+ip ssh version 2
+
+STEP 8: VERIFY THE SSH CONFIGURATION
+R3:
+show ip ssh (#)
+
+STEP 9: ATTEMPT TO CONNECT TO R3 VIA TELNET FROM PC-C
+PC-C:
+telnet 192.168.3.1
+
+STEP 10: CONNECT TO R3 USING SSH ON PC-C
+PC-C:
+ssh -l sshadmin 192.168.3.1
+password : sshpa55
+
+STEP 11: CONNECT TO R3 USING SSH ON R2
+R2:
+ssh -v 2 -l sshadmin 10.2.2.1 (#)
+
+
+
+======================================================================================================================
+======================================================================================================================
+
+PART 1: CONFIGURE ROUTERS
+(Execute on all routers)
+
+line vty 0 4
+password vtypa55
+login
+
+enable secret enpa55
+
+R1:
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R2:
+router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+R3:
+router ospf 1
+network 192.168.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+PC-A
+ping 192.168.3.5
+
+PC-B
+ping 192.168.3.5
+
+
+---------------------------------------------------------------
+
+
+PART 2: CONFIGURE OSPF MD5 AUTHENTICATION
+(Execute on all routers)
+
+router ospf 1
+area 0 authentication message-digest
+
+R1:
+int se 0/1/0
+ip ospf message-digest-key 1 md5 md5pa55
+
+R2:
+int se 0/1/0
+ip ospf message-digest-key 1 md5 md5pa55
+int se 0/1/1
+ip ospf message-digest-key 1 md5 md5pa55
+
+R3:
+int se 0/1/0
+ip ospf message-digest-key 1 md5 md5pa55
+
+(Execute on all routers)
+show ip ospf interface  (#)
+
+
+---------------------------------------------------------------
+
+PART 3: CONFIGURE NTP
+Open PC-A --- Services --- NTP ---- make Service (ON) and Authentication (Enable) ---- set Key value to 1 and password as ntppa55
+
+(Execute on all routers)
+ntp server 192.168.1.5
+
+ntp update-calendar
+ 
+show clock  (#)
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 ntppa55
+
+service timestamps log datetime msec
+
+
+---------------------------------------------------------------
+
+
+PART 4: CONFIGURE ROUTERS TO LOG MESSAGES TO THE SYSLOG SERVICE
+
+(Execute on all routers)
+
+logging host 192.168.1.6
+
+show logging
+O/p: 2 messages lines logged
+--
+Open the SYSLOG SERVER ie PC-B – Service --- SYSLOG 
+
+
+---------------------------------------------------------------
+
+PART 5: CONFIGURE R3 TO SUPPORT SSH CONNECTION
+R3:
+ip domain-name ccnasecurity.com
+
+username sshadmin privilege 15 secret sshpa55
+
+line vty 0 4 
+login local
+transport input ssh
+
+crypto key zeroize rsa
+O/p: no signature RSA keys found 
+
+crypto key generate rsa
+
+show ip ssh (#)
+
+ip ssh time-out 90
+ip ssh authentication-retries 2
+ip ssh version 2
+
+show ip ssh (#)
+
+PC-C:
+telnet 192.168.3.1
+
+ssh -l sshadmin 192.168.3.1
+password : sshpa55
+
+R2:
+ssh -v 2 -l sshadmin 10.2.2.1 (#)
+

@@ -1,0 +1,129 @@
+Part 1: configure switch and router
+Step 1: configure the IP address on switch
+SWA:
+int vlan 1
+ip address 10.101.117.50 255.255.255.248
+no shut 
+ip default-gateway 10.101.117.49
+
+SWB:
+int vlan 1
+ip address 10.101.117.34 255.255.255.240
+no shut 
+ip default-gateway 10.101.117.33
+
+SWC:
+int vlan 1
+ip address 10.101.117.2 255.255.255.224
+no shut 
+ip default-gateway 10.101.117.1
+
+Step 2: configure the secret on router and switch
+(Execute on both router as well as switch)
+enable secret enpa55
+
+Step 3: configure the console password on router and switch
+(Execute on both router as well as switch)
+line console 0
+password conpa55
+login
+
+Step 4: test connectivity
+PCA> ping 10.101.117.35
+(successful)
+
+PCA> ping 10.101.117.2
+(successful)
+
+PCB> ping 10.101.117.2
+(successful)
+
+-------------------------------------------------------------------------
+
+Part 2: configure switch and router to support SSH connection
+Step 1: configure domain name and crypto key for the use with SSH
+(Execute on both router as well as switch)
+ip domain-name ccnasecurity.com
+
+Step 2: configure users to SSH
+(Execute on both router as well as switch)
+username admin secret adminpa55
+
+Step 3: configure incoming VTY lines
+(Execute on both router as well as switch)
+line vty 0 4
+login local
+crypto key generate rsa
+
+Step 4: verify the SSH connection
+PCA> ssh -l admin 10.101.117.34
+Password: adminpa55
+SWB>
+
+PCA> ssh -l admin 10.101.117.2
+Password: adminpa55
+SWC>
+
+PCB> ssh -l admin 10.101.117.50
+Password: adminpa55
+SWA>
+
+PCB> ssh -l admin 10.101.117.2
+Password: adminpa55
+SWC>
+
+SWC> ssh -l admin 10.101.117.50
+Password: adminpa55
+SWA>
+
+SWC> ssh -l admin 10.101.117.34
+Password: adminpa55
+SWB>
+
+-------------------------------------------------------------------------------
+
+Part 3: configure, apply and verify an extended number ACL 
+Step 1: configure an extended ACL
+(On Router)
+access-list 199 permit tcp 10.101.117.32 0.0.0.15 10.101.117.0 0.0.0.31 eq 22
+access-list 199 permit icmp any any
+
+Step 2: apply an extended ACL
+(On Router)
+int gig0/2
+ip access-group 199 out
+
+Step 3: Verify and extended ACL implementation
+a.	Ping from PCB to all other IP addresses in network
+PCA> ping 10.101.117.51
+(successful)
+PCA> ping 10.101.117.2
+(successful)
+
+b.	SSH from PCB to SWC
+PCB> ssh -l admin 10.101.117.2
+Password: adminpa55
+SWC>
+
+c.	Exit the SSH session to SWC
+SWC> exit
+
+d.	Ping from PCA to all other IP addresses in network
+PCA> ping 10.101.117.35
+(successful)
+PCA> ping 10.101.117.2
+(successful)
+
+e.	SSH from PCA to SWC
+PCA> ssh -l admin 10.101.117.2
+(unsuccessful)
+
+f.	SSH from PCA to SWB
+PCA> ssh -l admin 10.101.117.34
+Password: adminpa55
+SWB>
+
+g.	After logging into SWB do not log out. SSH to SWC in privilege at EXEC mode
+SWB# ssh -l admin 10.101.117.2
+Password: adminpa55
+SWC>

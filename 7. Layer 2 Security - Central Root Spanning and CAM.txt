@@ -1,0 +1,181 @@
+Part 1: Configure switch/router
+Step 1: Configure secret
+(Execute command on all routers and switches)
+
+enable secret enpa55
+
+Step 2: Configure console password
+(Execute command on all routers and switches)
+
+line console 0
+password conpa55
+login
+
+Step 3: configure SSH login
+(Execute command on all routers and switches)
+
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local
+crypto key generate rsa
+
+----------------------------------------------------------------------------------
+
+Part 2: Configure Root Bridge
+
+Step 1: Determine the current root bridge
+(Execute on all switches)
+
+show spanning-tree  (#)
+
+Check whether the central is root or not in this case the central is not root so we will assign central as root in step 2 and if our central is already root then skip to step 3
+
+Step 2: Assign central as primary root bridge
+{Execute on Central}
+
+spanning-tree vlan 1 root primary
+show spanning-tree (#)
+ 
+
+Step 3: Assign SW1 as secondary root bridge
+
+spanning-tree vlan 1 root secondary 
+show spanning-tree (#)
+ 
+--------------------------------------------------------------------------------------
+
+Part 3: Protect against STP Attacks
+
+Step 1: enable portfast or all access ports
+SWA/B:
+int range fa0/1-4
+spanning-tree portfast
+
+Step 2: Enable BPDU guard on all access ports
+SWA/B:
+int range fa0/1-4
+spanning-tree bpduguard enable
+
+Step 3: Enable root guard
+SW1/2:
+show spanning-tree (#)
+int range fa0/23-24
+spanning-tree guard root
+
+---------------------------------------------------------------------------------------
+
+
+Part 4: Configure port security and disable unused ports
+
+Step 1: Configure basic port security on all ports connected to hosts devices
+
+SWA/B:
+int range fa0/1-22
+switchport mode access
+switchport port-security
+switchport port-security maximum 2
+switchport port-security violation shutdown
+switchport port-security mac-address sticky
+
+Step 2: Verify port security 
+SWA/B:
+show port-security int fa0/1 (#)
+ 
+
+Step 3: Disable unused ports
+SWA/B:
+int range fa0/5-22
+shutdown
+
+Step 4: Verify Connectivity
+C1> ping 10.1.1.11
+(Successful)
+C1> ping 10.1.1.14
+(Successful)
+
+Step 5: Verify port security
+SWA/B:
+show port-security int fa0/1  (#)
+
+
+
+===================================================================================================
+===================================================================================================
+
+
+Part 1: Configure switch/router
+(Execute command on all routers and switches)
+enable secret enpa55
+
+line console 0
+password conpa55
+login
+
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local
+crypto key generate rsa
+
+----------------------------------------------------------------------------------
+
+Part 2: Configure Root Bridge
+Step 1: Determine the current root bridge
+(Execute on all switches)
+show spanning-tree  (#)
+Check whether the central is root or not in this case the central is not root so we will assign central as root in step 2 and if our central is already root then skip to step 3
+
+Step 2: Assign central as primary root bridge
+{Execute on Central}
+spanning-tree vlan 1 root primary
+show spanning-tree (#)
+
+Step 3: Assign SW1 as secondary root bridge
+spanning-tree vlan 1 root secondary 
+show spanning-tree (#)
+ 
+--------------------------------------------------------------------------------------
+
+Part 3: Protect against STP Attacks
+
+SWA/B:
+int range fa0/1-4
+spanning-tree portfast
+
+SWA/B:
+int range fa0/1-4
+spanning-tree bpduguard enable
+
+SW1/2:
+show spanning-tree (#)
+int range fa0/23-24
+spanning-tree guard root
+
+---------------------------------------------------------------------------------------
+
+
+Part 4: Configure port security and disable unused ports
+
+SWA/B:
+int range fa0/1-22
+switchport mode access
+switchport port-security
+switchport port-security maximum 2
+switchport port-security violation shutdown
+switchport port-security mac-address sticky
+
+SWA/B:
+show port-security int fa0/1 (#)
+ 
+int range fa0/5-22
+shutdown
+
+C1> ping 10.1.1.11
+(Successful)
+C1> ping 10.1.1.14
+(Successful)
+
+SWA/B:
+show port-security int fa0/1  (#)
+

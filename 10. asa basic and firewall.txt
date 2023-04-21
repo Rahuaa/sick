@@ -1,0 +1,374 @@
+Part 1 : Configure Router
+Step 1 : Configure secret on router
+(Execute command on all routers)
+
+enable secret enpa55
+
+Step 2 : Configure console password on all routers 
+(Execute command on all routers)
+
+line console 0
+password conpa55
+login
+exit
+
+Step 3 : Configure SSH login on router
+(Execute command on all routers)
+
+ip domain-name ccnasecurity.com
+username admin secret pa55
+line vty 0 4
+login local
+exit
+crypto key generate rsa
+
+Step 4 : Configure OSPF on router
+R1
+router ospf 1
+network 209.165.200.0 0.0.0.7 area 0
+network 10.1.1.0 0.0.0.3 area 0  
+
+R2
+router ospf 1
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+R3
+router ospf 1
+network 172.16.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+Step 5 : Verify connectivity.
+Send packets from
+PCC -> R1, R2, R3 
+PCC -> ASA, PC-B, DMZ server
+
+---------------------------------------------------------------------------------
+
+Part 2 : Explore ASA
+
+Step 1 : Determine the ASA version, interfaces and license.
+ASA# en
+ASA# show version
+
+Step 2 : 
+ASA# show file system
+ASA# show flash:
+
+-------------------------------------------------------------------------------------
+
+Part 3 (Execute all on ASA)
+Step 1 : 
+ASA# conf t
+hostname CCNAS-ASA
+domain-name ccnasecurity.com
+
+Step 2 :
+enable password enpa55
+
+Step 3: set tiem 
+clock set hr:min:sec date month year
+
+
+Step 4 : configure interface
+int vlan 1
+nameif inside
+ip address 192.168.1.1 255.255.255.0 
+security-level 100
+
+int vlan 2
+nameif outside
+ip address 209.165.200.226 255.255.255.248
+security-level 0
+exit
+
+Step 5 :
+ASA# show int ip brief
+
+ASA# show ip address
+
+ASA# show switch vlan
+
+Step 6: 
+Test connectivity to the ASA.
+PCB -> ASA 
+PCB -> R1 
+
+-----------------------------------------------------------------------------------------------
+Part 4 : 
+Step 1 : 
+(Execute all on ASA)
+ASA# show route
+ASA# conf t
+route outside 0.0.0.0 0.0.0.0 209.165.200.225
+ASA# show route
+
+Step 2 : 
+Test connectivity.
+ASA -> R1
+
+Step 3 : 
+ASA waale main
+object network inside-net
+subnet 192.168.1.0 255.255.255.0
+nat (inside,outside) dynamic interface
+end
+exit
+
+Step 4 : 
+ASA# show run
+
+PCB -> R1 
+
+ASA# show nat
+
+Step 5 : Modify the default MPF application inspection global service policy
+class-map inspection_default
+match default-inspection-traffic
+exit
+policy-map global_policy
+class inspection_default
+inspect icmp
+exit
+service-policy global_policy global
+
+Step 6 : 
+PCB -> R1 
+
+-----------------------------------------------------------------------------------------------------------
+
+Part 5 : Configure DHCP, AAA, and SSH  (all on asa)
+dhcpd address 192.168.1.5-192.168.1.36 inside
+dhcpd dns 209.165.201.2 interface inside
+dhcpd enable inside
+
+Change PC-B from a static IP address to a DHCP client, and verify that it
+receives IP addressing information
+
+username admin password adminpa55
+aaa authentication ssh console LOCAL
+
+crypto key generate rsa modulus 1024    (ans - no)
+ssh 192.168.1.0 255.255.255.0 inside
+ssh 172.16.3.3 255.255.255.255 outside
+ssh timeout 10
+
+
+PCC> ssh -l admin 209.165.200.226
+
+PCB> ssh -l admin 192.168.1.1
+
+-----------------------------------------------------------------------------------------------------------------
+
+Part 6 : Configure a DMZ, Static NAT, and ACLs
+(all on asa)
+int vlan 3
+ip address 192.168.2.1 255.255.255.0 
+no forward interface vlan 1  
+nameif dmz
+security-level 70
+int et0/2
+switchport access vlan 3
+exit
+exit
+
+ASA# show int ip brief
+
+ASA# show ip address
+
+ASA# show switch vlan
+
+object network dmz-server
+host 192.168.2.3 
+nat (dmz,outside) static 209.165.200.227 
+exit
+
+access-list OUTSIDE-DMZ permit icmp any host 192.168.2.3
+access-list OUTSIDE-DMZ permit tcp any host 192.168.2.3 eq 80
+access-group OUTSIDE-DMZ in interface outside
+
+Test access to the DMZ server.
+The ability to successfully test outside access to the DMZ web server was not
+in place; therefore, successful testing is not required.
+
+
+===================================================================================================
+===================================================================================================
+
+
+Part 1 : Configure Router
+(Execute command on all routers)
+enable secret enpa55
+
+line console 0
+password conpa55
+login
+exit
+
+ip domain-name ccnasecurity.com
+username admin secret pa55
+line vty 0 4
+login local
+exit
+crypto key generate rsa
+
+R1
+router ospf 1
+network 209.165.200.0 0.0.0.7 area 0
+network 10.1.1.0 0.0.0.3 area 0  
+
+R2
+router ospf 1
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+R3
+router ospf 1
+network 172.16.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+
+Send packets from
+PCC -> R1, R2, R3 
+PCC -> ASA, PC-B, DMZ server
+
+---------------------------------------------------------------------------------
+
+Part 2 : Explore ASA
+Step 1 : Determine the ASA version, interfaces and license.
+ASA# en
+ASA# show version
+
+Step 2 : 
+ASA# show file system
+ASA# show flash:
+
+-------------------------------------------------------------------------------------
+
+Part 3 (Execute all on ASA)
+Step 1 : 
+ASA# conf t
+hostname CCNAS-ASA
+domain-name ccnasecurity.com
+
+enable password enpa55
+
+clock set hr:min:sec date month year
+
+int vlan 1
+nameif inside
+ip address 192.168.1.1 255.255.255.0 
+security-level 100
+
+int vlan 2
+nameif outside
+ip address 209.165.200.226 255.255.255.248
+security-level 0
+exit
+
+ASA# show int ip brief
+
+ASA# show ip address
+
+ASA# show switch vlan
+
+
+Test connectivity to the ASA.
+PCB -> ASA 
+PCB -> R1 
+
+-----------------------------------------------------------------------------------------------
+Part 4 : 
+(Execute all on ASA)
+ASA# show route
+ASA# conf t
+route outside 0.0.0.0 0.0.0.0 209.165.200.225
+ASA# show route
+
+Test connectivity.
+ASA -> R1
+
+
+object network inside-net
+subnet 192.168.1.0 255.255.255.0
+nat (inside,outside) dynamic interface
+end
+exit
+
+
+ASA# show run
+
+PCB -> R1 
+
+ASA# show nat
+
+class-map inspection_default
+match default-inspection-traffic
+exit
+policy-map global_policy
+class inspection_default
+inspect icmp
+exit
+service-policy global_policy global
+
+Step 6 : 
+PCB -> R1 
+
+-----------------------------------------------------------------------------------------------------------
+
+Part 5 : Configure DHCP, AAA, and SSH  (all on asa)
+dhcpd address 192.168.1.5-192.168.1.36 inside
+dhcpd dns 209.165.201.2 interface inside
+dhcpd enable inside
+
+Change PC-B from a static IP address to a DHCP client, and verify that it
+receives IP addressing information
+
+username admin password adminpa55
+aaa authentication ssh console LOCAL
+
+crypto key generate rsa modulus 1024    (ans - no)
+ssh 192.168.1.0 255.255.255.0 inside
+ssh 172.16.3.3 255.255.255.255 outside
+ssh timeout 10
+
+
+PCC> ssh -l admin 209.165.200.226
+
+PCB> ssh -l admin 192.168.1.1
+
+-----------------------------------------------------------------------------------------------------------------
+
+Part 6 : Configure a DMZ, Static NAT, and ACLs
+(all on asa)
+int vlan 3
+ip address 192.168.2.1 255.255.255.0 
+no forward interface vlan 1  
+nameif dmz
+security-level 70
+int et0/2
+switchport access vlan 3
+exit
+exit
+
+ASA# show int ip brief
+
+ASA# show ip address
+
+ASA# show switch vlan
+
+object network dmz-server
+host 192.168.2.3 
+nat (dmz,outside) static 209.165.200.227 
+exit
+
+access-list OUTSIDE-DMZ permit icmp any host 192.168.2.3
+access-list OUTSIDE-DMZ permit tcp any host 192.168.2.3 eq 80
+access-group OUTSIDE-DMZ in interface outside
+
+Test access to the DMZ server.
+The ability to successfully test outside access to the DMZ web server was not
+in place; therefore, successful testing is not required.
+
+
+
+
